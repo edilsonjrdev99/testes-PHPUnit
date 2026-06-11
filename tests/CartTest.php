@@ -1,6 +1,8 @@
 <?php
 
+use App\Address;
 use App\Cart;
+use App\Customer;
 use App\Product;
 use PHPUnit\Framework\TestCase;
 
@@ -28,5 +30,33 @@ class CartTest extends TestCase {
     $cart->removeProduct(1);
 
     $this->assertInstanceOf(Cart::class, $cart);
+  }
+
+  /**
+   * O teste deve adicionar um cliente no carrinho quando não existir um
+   */
+  public function testShoildAddCustomerToTheCart(): void {
+    $address  = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
+    $customer = new Customer('João', 27, $address);
+
+    $cart = new Cart('cart-1', null, []);
+
+    $this->assertSame($cart, $cart->addCustomer($customer));
+  }
+
+  /**
+   * O teste deve retornar erro ao tentar adicionar um cliente em um carrinho com cliente existente
+   */
+  public function testShoildReturnErrorToAddCustomerToACartContainingTheCustomer(): void {
+    $address  = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
+    $customer1 = new Customer('João', 27, $address);
+    $customer2 = new Customer('Maria', 27, $address);
+
+    $cart = new Cart('cart-1', $customer1, []);
+    
+    $this->expectException(Exception::class);
+    $this->expectExceptionMessage('O carrinho já possui usuário, para adicionar esse você deve remover o atual');
+    
+    $cart->addCustomer($customer2);
   }
 }
