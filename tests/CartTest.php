@@ -25,11 +25,31 @@ class CartTest extends TestCase {
    * O teste deve remover os produtos corretamente
    */
   public function testMustRemoveTheProductCorrectly(): void {
-    $cart = new Cart('cart-1');
+    $cart    = new Cart('cart-1');
+    $product = new Product(1, 'Teclado', 100.0);
 
-    $cart->removeProduct(1);
+    $cart->addProduct($product);
+    $this->assertEquals(100.0, $cart->getSubtotalCart());
 
-    $this->assertInstanceOf(Cart::class, $cart);
+    $result = $cart->removeProduct(1);
+
+    $this->assertSame($cart, $result);
+    $this->assertEquals(0, $cart->getSubtotalCart());
+  }
+
+  /**
+   * O teste deve adicionar um produto ao carrinho corretamente
+   */
+  public function testShouldAddProductToCart(): void {
+    $cart    = new Cart('cart-1');
+    $product = new Product(1, 'Teclado', 100.0);
+
+    $this->assertEquals(0, $cart->getSubtotalCart());
+
+    $result = $cart->addProduct($product);
+
+    $this->assertSame($cart, $result);
+    $this->assertEquals(100.0, $cart->getSubtotalCart());
   }
 
   /**
@@ -48,7 +68,7 @@ class CartTest extends TestCase {
    * O teste deve retornar erro ao tentar adicionar um cliente em um carrinho com cliente existente
    */
   public function testShoildReturnErrorToAddCustomerToACartContainingTheCustomer(): void {
-    $address  = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
+    $address   = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
     $customer1 = new Customer('João', 27, $address);
     $customer2 = new Customer('Maria', 27, $address);
 

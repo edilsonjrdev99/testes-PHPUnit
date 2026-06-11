@@ -14,8 +14,8 @@ $address = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
 $customer = new Customer('João', 27, $address);
 
 // Produtos
-$product1    = new Product(1, 'Teclado', 200);
-$product2    = new Product(2, 'Fone', 100);
+$product1 = new Product(1, 'Teclado', 200);
+$product2 = new Product(2, 'Fone', 100);
 
 // Carrinho
 $cart = new Cart('cart-1', $customer);
