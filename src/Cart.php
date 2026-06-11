@@ -5,12 +5,10 @@ namespace App;
 use Exception;
 
 class Cart {
-  private float $subTotalCart = 0;
-
   public function __construct(
     private string $id,
     private ?Customer $customer = null,
-    private ?array $products = []
+    private array $products = []
   ) {}
 
   /**
@@ -58,10 +56,10 @@ class Cart {
   }
 
   /**
-   * Responsável por calcular o subtotal do carrinho
+   * Responsável por calcular e retornar o subtotal do carrinho
    */
-  private function calculateSubTotal(): self {
-    if(empty($this->products)) return $this;
+  public function getSubtotalCart(): float {
+    if(empty($this->products)) return 0;
 
     $products = $this->products;
 
@@ -70,21 +68,13 @@ class Cart {
       $products
     );
     
-    $this->subTotalCart = array_sum($productsValues);
-
-    return $this;
-  }
-
-  public function getSubtotalCart(): float {
-    return $this->subTotalCart;
+    return array_sum($productsValues);
   }
 
   /**
    * Responsável por retornar o carrinho
    */
   public function getCart(): self {
-    $this->calculateSubTotal();
-
     return $this;
   }
 }
