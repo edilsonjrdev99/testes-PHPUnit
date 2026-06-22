@@ -2,13 +2,15 @@
 
 namespace App;
 
+use App\Interface\RepositoryInterface;
 use Exception;
 
 class Cart {
   public function __construct(
     private string $id,
+    private RepositoryInterface $repository,
+    private array $products = [],
     private ?Customer $customer = null,
-    private array $products = []
   ) {}
 
   /**
@@ -37,6 +39,7 @@ class Cart {
    */
   public function addProduct(Product $product): self {
     $this->products[] = $product;
+    $this->repository->save($this);
 
     return $this;
   }

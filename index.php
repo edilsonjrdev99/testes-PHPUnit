@@ -4,6 +4,7 @@ use App\Address;
 use App\Cart;
 use App\Customer;
 use App\Product;
+use App\Repository\CartRepository;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -17,8 +18,10 @@ $customer = new Customer('João', 27, $address);
 $product1 = new Product(1, 'Teclado', 200);
 $product2 = new Product(2, 'Fone', 100);
 
+$repository = new CartRepository();
+
 // Carrinho
-$cart = new Cart('cart-1', $customer);
+$cart = new Cart('cart-1', $repository, [], $customer);
 $cart->addProduct($product1);
 $cart->addProduct($product2);
 $cart->removeProduct(1);

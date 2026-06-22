@@ -3,6 +3,7 @@
 use App\Address;
 use App\Cart;
 use App\Customer;
+use App\Interface\RepositoryInterface;
 use App\Product;
 use PHPUnit\Framework\TestCase;
 
@@ -13,11 +14,15 @@ class CartTest extends TestCase {
    */
   private Cart $cart;
 
+  private RepositoryInterface $repository;
+
   /**
    * Setup para cada teste
    */
   protected function setUp(): void {
-    $this->cart = new Cart('cart-1');
+    $this->repository = $this->createStub(RepositoryInterface::class);
+
+    $this->cart = new Cart('cart-1', $this->repository, [], null);
   }
 
   /**
@@ -72,7 +77,7 @@ class CartTest extends TestCase {
     $address  = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
     $customer = new Customer('João', 27, $address);
 
-    $cart = new Cart('cart-1', null, []);
+    $cart = new Cart('cart-1', $this->repository, [], null);
 
     $this->assertSame($cart, $cart->addCustomer($customer));
   }
@@ -85,7 +90,7 @@ class CartTest extends TestCase {
     $customer1 = new Customer('João', 27, $address);
     $customer2 = new Customer('Maria', 27, $address);
 
-    $cart = new Cart('cart-1', $customer1, []);
+    $cart = new Cart('cart-1', $this->repository, [], $customer1);
     
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('O carrinho já possui usuário, para adicionar esse você deve remover o atual');
@@ -110,4 +115,18 @@ class CartTest extends TestCase {
     $this->assertEquals(150.0, $result);
   }
 
+  /**
+   * O teste deve validar se o método save do repository está sendo chamado ao adicionar um produto no carrinho
+   */
+  public function testShouldValidateWhetherTheSaveMethodOfRepositoryInterfaceIsCalled(): void {
+    $repository = $this->getMockBuilder(RepositoryInterface::class)
+      ->getMock();
+      
+    $repository->expects($this->once())
+      ->method('save');
+
+    $product = new Product(1, 'Fone', 100);
+    $cart = new Cart('cart-1', $repository, [], null);
+    $cart->addProduct($product);
+  }
 }
