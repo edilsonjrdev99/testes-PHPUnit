@@ -77,4 +77,11 @@ class Cart {
   public function getCart(): self {
     return $this;
   }
+
+  /**
+   * Responsável por retornar o checkout
+   */
+  public function checkout(): float {
+    return $this->getSubtotalCart();
+  }
 }

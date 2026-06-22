@@ -7,11 +7,24 @@ use App\Product;
 use PHPUnit\Framework\TestCase;
 
 class CartTest extends TestCase {
+
+  /**
+   * Carrinho
+   */
+  private Cart $cart;
+
+  /**
+   * Setup para cada teste
+   */
+  protected function setUp(): void {
+    $this->cart = new Cart('cart-1');
+  }
+
   /**
    * O teste deve somar os produtos corretamente
    */
   public function testShouldSumProductsCorrectly(): void {
-    $cart = new Cart('cart-1');
+    $cart = $this->cart;
 
     $cart->addProduct(new Product(1, 'Teclado', 100));
     $cart->addProduct(new Product(2, 'fone', 50));
@@ -25,7 +38,7 @@ class CartTest extends TestCase {
    * O teste deve remover os produtos corretamente
    */
   public function testMustRemoveTheProductCorrectly(): void {
-    $cart    = new Cart('cart-1');
+    $cart = $this->cart;
     $product = new Product(1, 'Teclado', 100.0);
 
     $cart->addProduct($product);
@@ -41,7 +54,7 @@ class CartTest extends TestCase {
    * O teste deve adicionar um produto ao carrinho corretamente
    */
   public function testShouldAddProductToCart(): void {
-    $cart    = new Cart('cart-1');
+    $cart = $this->cart;
     $product = new Product(1, 'Teclado', 100.0);
 
     $this->assertEquals(0, $cart->getSubtotalCart());
@@ -79,4 +92,22 @@ class CartTest extends TestCase {
     
     $cart->addCustomer($customer2);
   }
+
+  /**
+   * O teste deve retornar o valor igual ao getSubtotalCart e garantir que esse método seja chamado uma única vez
+   */
+  public function testShouldReturnTheSubTotalValueAndEnsureThatTheGetSubtotalCartMethodIsBeingCalled(): void {
+    $cartMock = $this->getMockBuilder(Cart::class)
+      ->disableOriginalConstructor()
+      ->onlyMethods(['getSubtotalCart'])
+      ->getMock();
+
+    $cartMock->expects($this->once())
+      ->method('getSubtotalCart')
+      ->willReturn(150.0);
+
+    $result = $cartMock->checkout();
+    $this->assertEquals(150.0, $result);
+  }
+
 }
