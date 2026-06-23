@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Cart;
 use App\Interface\RepositoryInterface;
+use Override;
 
 class CartRepository implements RepositoryInterface {
   /**
@@ -11,5 +12,14 @@ class CartRepository implements RepositoryInterface {
    */
   public function save(Cart $cart): void {
     return;
+  }
+
+  #[Override]
+  public function list(): array {
+    return [];
+  }
+
+  public function detail(string $cartId): ?Cart {
+    return null;
   }
 }

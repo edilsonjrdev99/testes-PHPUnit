@@ -7,6 +7,54 @@ use App\Interface\RepositoryInterface;
 use App\Product;
 use PHPUnit\Framework\TestCase;
 
+class CartRepositoryFakeSpy implements RepositoryInterface {
+  private int $saveCount = 0;
+
+  private array $args = [];
+
+  public function save(Cart $cart): void {
+    $this->saveCount++;
+
+    // Simalação de que salvou no banco
+
+    $this->args[] = $cart->getCartId() . '-' . $this->saveCount;
+  }
+
+  public function list(): array {
+    return [];
+  }
+
+  public function detail(string $cartId): ?Cart {
+    return null;
+  }
+
+  public function getSaveCount(): int {
+    return $this->saveCount;
+  }
+
+  public function getArgs(): array {
+    return $this->args;
+  }
+}
+
+class CartRepositoryFake implements RepositoryInterface {
+  private array $carts = [];
+
+  public function list(): array {
+    return $this->carts;
+  }
+
+  public function detail(string $cartId): ?Cart {
+    $carts = $this->carts;
+
+    return $carts[$cartId] ?? null;
+  }
+
+  public function save(Cart $cart): void {
+    $this->carts[$cart->getCartId()] = $cart;
+  }
+}
+
 class CartTest extends TestCase {
 
   /**
@@ -128,5 +176,47 @@ class CartTest extends TestCase {
     $product = new Product(1, 'Fone', 100);
     $cart = new Cart('cart-1', $repository, [], null);
     $cart->addProduct($product);
+  }
+
+  /**
+   * O teste deve verificar se o método save é chamado duas vezes ao adicionar 2 produtos no carrinho
+   */
+  public function testShouldVerifyIfTheSaveMethodIsCalledTwiceWhenAddingTwoProductsToTheCart(): void {
+    // Dummy
+    $product1 = new Product(1, 'Fone', 100);
+    $product2 = new Product(2, 'Cabe usb', 20);
+
+    $repositoryFakeSpy = new CartRepositoryFakeSpy();
+
+    $cart = new Cart('cart-1', $repositoryFakeSpy, [], null);
+    $cart->addProduct($product1);
+    $cart->addProduct($product2);
+
+    $this->assertEquals(2, $repositoryFakeSpy->getSaveCount());
+    $this->assertEquals(['cart-1-1', 'cart-1-2'], $repositoryFakeSpy->getArgs());
+  }
+
+  /**
+   * O teste deve verificar se o método save está salvando os carrinhos corretamente e os gets (list e detail) funcionam corretamente
+   */
+  public function testShouldVerifyThatTheSaveFunctionIsSavingTheCartsCorrectlyAndThatTheGetterFunctionsAreWorkingCorrectly(): void {
+    $repositoryFake = new CartRepositoryFake();
+    $productDumy    = new Product(1, 'Fone', 100);
+
+    $cart1 = new Cart('cart-1', $repositoryFake, [], null);
+    $cart2 = new Cart('cart-2', $repositoryFake, [], null);
+
+    $cart1->addProduct($productDumy);
+    $cart2->addProduct($productDumy);
+
+    $this->assertEquals(
+      [
+        'cart-1' => $cart1, 
+        'cart-2' => $cart2
+      ], 
+      $repositoryFake->list()
+    );
+
+    $this->assertEquals($cart1, $repositoryFake->detail('cart-1'));
   }
 }

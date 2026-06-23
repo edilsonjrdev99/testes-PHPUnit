@@ -87,4 +87,18 @@ class Cart {
   public function checkout(): float {
     return $this->getSubtotalCart();
   }
+
+  /**
+   * Responsável por retornar os produtos do carrinho
+   */
+  public function getProducts(): array {
+    return $this->products;
+  }
+
+  /**
+   * Responsável por retornar o id do carrinho
+   */
+  public function getCartId(): string {
+    return $this->id;
+  }
 }
