@@ -3,6 +3,7 @@
 use App\Address;
 use App\Cart;
 use App\Customer;
+use App\Interface\NotifierInterface;
 use App\Interface\RepositoryInterface;
 use App\Product;
 use PHPUnit\Framework\TestCase;
@@ -62,15 +63,24 @@ class CartTest extends TestCase {
    */
   private Cart $cart;
 
+  /**
+   * Repositório
+   */
   private RepositoryInterface $repository;
+
+  /**
+   * Notifier
+   */
+  private NotifierInterface $notifier;
 
   /**
    * Setup para cada teste
    */
   protected function setUp(): void {
     $this->repository = $this->createStub(RepositoryInterface::class);
+    $this->notifier   = $this->createStub(NotifierInterface::class);
 
-    $this->cart = new Cart('cart-1', $this->repository, [], null);
+    $this->cart = new Cart('cart-1', $this->repository, $this->notifier, [], null);
   }
 
   /**
@@ -123,9 +133,9 @@ class CartTest extends TestCase {
    */
   public function test_should_add_customer_to_the_cart(): void {
     $address  = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
-    $customer = new Customer('João', 27, $address);
+    $customer = new Customer('João', 27, $address, '');
 
-    $cart = new Cart('cart-1', $this->repository, [], null);
+    $cart = new Cart('cart-1', $this->repository, $this->notifier, [], null);
 
     $this->assertSame($cart, $cart->addCustomer($customer));
   }
@@ -135,10 +145,10 @@ class CartTest extends TestCase {
    */
   public function test_should_return_error_when_adding_customer_to_a_cart_containing_the_customer(): void {
     $address   = new Address(12345678, 'São Paulo', 'Av. Paulista', 100, 'Centro');
-    $customer1 = new Customer('João', 27, $address);
-    $customer2 = new Customer('Maria', 27, $address);
+    $customer1 = new Customer('João', 27, $address, '');
+    $customer2 = new Customer('Maria', 27, $address, '');
 
-    $cart = new Cart('cart-1', $this->repository, [], $customer1);
+    $cart = new Cart('cart-1', $this->repository, $this->notifier, [], $customer1);
     
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('O carrinho já possui usuário, para adicionar esse você deve remover o atual');
@@ -155,7 +165,7 @@ class CartTest extends TestCase {
     $repository = $this->createStub(RepositoryInterface::class);
 
     $cartMock = $this->getMockBuilder(Cart::class)
-      ->setConstructorArgs(['cart-1', $repository, [$product], $customer])
+      ->setConstructorArgs(['cart-1', $repository, $this->notifier, [$product], $customer])
       ->onlyMethods(['getSubtotalCart'])
       ->getMock();
 
@@ -178,7 +188,7 @@ class CartTest extends TestCase {
       ->method('save');
 
     $product = new Product(1, 'Fone', 100);
-    $cart = new Cart('cart-1', $repository, [], null);
+    $cart = new Cart('cart-1', $repository, $this->notifier, [], null);
     $cart->addProduct($product);
   }
 
@@ -192,7 +202,7 @@ class CartTest extends TestCase {
 
     $repositoryFakeSpy = new CartRepositoryFakeSpy();
 
-    $cart = new Cart('cart-1', $repositoryFakeSpy, [], null);
+    $cart = new Cart('cart-1', $repositoryFakeSpy, $this->notifier, [], null);
     $cart->addProduct($product1);
     $cart->addProduct($product2);
 
@@ -207,8 +217,8 @@ class CartTest extends TestCase {
     $repositoryFake = new CartRepositoryFake();
     $productDumy    = new Product(1, 'Fone', 100);
 
-    $cart1 = new Cart('cart-1', $repositoryFake, [], null);
-    $cart2 = new Cart('cart-2', $repositoryFake, [], null);
+    $cart1 = new Cart('cart-1', $repositoryFake, $this->notifier, [], null);
+    $cart2 = new Cart('cart-2', $repositoryFake, $this->notifier, [], null);
 
     $cart1->addProduct($productDumy);
     $cart2->addProduct($productDumy);
@@ -229,8 +239,8 @@ class CartTest extends TestCase {
     $repositoryFake = new CartRepositoryFake();
     $productDumy    = new Product(1, 'Fone', 100);
 
-    $cart1 = new Cart('cart-1', $repositoryFake, [], null);
-    $cart2 = new Cart('cart-2', $repositoryFake, [], null);
+    $cart1 = new Cart('cart-1', $repositoryFake, $this->notifier, [], null);
+    $cart2 = new Cart('cart-2', $repositoryFake, $this->notifier, [], null);
 
     $cart1->addProduct($productDumy);
     $cart2->addProduct($productDumy);
@@ -243,12 +253,12 @@ class CartTest extends TestCase {
    */
   public function test_should_persist_cart_when_removing_customer(): void {
     $address    = new Address(12345678, 'São Paulo', 'Av Paulista', 10, 'SP');
-    $customer   = new Customer('Ana', 26, $address);
+    $customer   = new Customer('Ana', 26, $address, '');
     $repository = $this->createMock(RepositoryInterface::class);
 
     $repository->expects($this->once())->method('save');
 
-    $cart = new Cart('cart-1', $repository, [], $customer);
+    $cart = new Cart('cart-1', $repository, $this->notifier, [], $customer);
     $cart->removeCustomer();
   }
 
@@ -259,7 +269,7 @@ class CartTest extends TestCase {
     $repository = $this->createMock(RepositoryInterface::class);
     $repository->expects($this->never())->method('save');
 
-    $cart = new Cart('cart-customer-2', $repository, []);
+    $cart = new Cart('cart-customer-2', $repository, $this->notifier, []);
     $cart->removeCustomer();
   }
 
@@ -272,7 +282,7 @@ class CartTest extends TestCase {
 
     $repository->expects($this->once())->method('save');
 
-    $cart = new Cart('cart-product', $repository, [$product], null);
+    $cart = new Cart('cart-product', $repository, $this->notifier, [$product], null);
     $cart->removeProduct(1);
   }
 
@@ -282,7 +292,7 @@ class CartTest extends TestCase {
   public function test_should_not_persist_cart_when_removing_non_existent_product_in_the_cart(): void {
     $repository = $this->createMock(RepositoryInterface::class);
     $product    = new Product(1, 'Fone', 100);
-    $cart       = new Cart('cart-test-2', $repository, [$product]);
+    $cart       = new Cart('cart-test-2', $repository, $this->notifier, [$product]);
 
     $repository->expects($this->never())->method('save');
 
@@ -298,7 +308,7 @@ class CartTest extends TestCase {
 
     $repository->expects($this->once())->method('save');
 
-    $cart = new Cart('cart-c', $repository, [], null);
+    $cart = new Cart('cart-c', $repository, $this->notifier, [], null);
     $cart->addCustomer($customer);
   }
 
@@ -307,7 +317,7 @@ class CartTest extends TestCase {
    */
   public function test_should_return_error_if_empty_cart_when_creating_checkout(): void {
     $repository = $this->createStub(RepositoryInterface::class);
-    $cart       = new Cart('cart-1', $repository, []);
+    $cart       = new Cart('cart-1', $repository, $this->notifier, []);
 
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('O carrinho não pode estar vazio!');
@@ -321,7 +331,7 @@ class CartTest extends TestCase {
   public function test_should_return_error_if_cart_not_contain_customer_when_creating_checkout(): void {
     $repository = $this->createStub(RepositoryInterface::class);
     $product    = $this->createStub(Product::class);
-    $cart       = new Cart('cart-error-1', $repository, [$product]);
+    $cart       = new Cart('cart-error-1', $repository, $this->notifier, [$product]);
     
     $this->expectException(Exception::class);
     $this->expectExceptionMessage('O carrinho deve conter um cliente!');
@@ -339,7 +349,22 @@ class CartTest extends TestCase {
 
     $repository->expects($this->once())->method('save');
 
-    $cart = new Cart('cart-id-1', $repository, [$product], $customer);
+    $cart = new Cart('cart-id-1', $repository, $this->notifier, [$product], $customer);
+    $cart->checkout();
+  }
+
+  /**
+   * O teste deve verificar se é enviado uma notificação ao criar um checkout
+   */
+  public function test_should_send_notifier_when_creating_checkout(): void {
+    $repository = $this->createStub(RepositoryInterface::class);
+    $notifier   = $this->createMock(NotifierInterface::class);
+    $customer   = $this->createStub(Customer::class);
+    $product    = $this->createStub(Product::class);
+
+    $notifier->expects($this->once())->method('send');
+
+    $cart = new Cart('cart-notification', $repository, $notifier, [$product], $customer);
     $cart->checkout();
   }
 }

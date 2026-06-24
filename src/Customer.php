@@ -6,7 +6,8 @@ class Customer {
   public function __construct(
     private string $name,
     private int $age,
-    private Address $address
+    private Address $address,
+    private string $email
   ) {}
 
   public function getCustomer(): self {
@@ -21,5 +22,9 @@ class Customer {
 
   public function updateAddress(): self {
     return $this;
+  }
+
+  public function getEmail(): string {
+    return $this->email;
   }
 }

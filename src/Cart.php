@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Interface\NotifierInterface;
 use App\Interface\RepositoryInterface;
 use Exception;
 
@@ -9,6 +10,7 @@ class Cart {
   public function __construct(
     private string $id,
     private RepositoryInterface $repository,
+    private NotifierInterface $notifier,
     private array $products = [],
     private ?Customer $customer = null,
   ) {}
@@ -95,6 +97,8 @@ class Cart {
     if(!$this->customer) throw new Exception('O carrinho deve conter um cliente!');
 
     $this->repository->save($this);
+
+    $this->notifier->send($this->customer->getEmail(), '', '');
 
     return $this->getSubtotalCart();
   }
