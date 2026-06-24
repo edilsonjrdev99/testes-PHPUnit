@@ -21,6 +21,7 @@ class Cart {
       throw new Exception('O carrinho já possui usuário, para adicionar esse você deve remover o atual');
 
     $this->customer = $customer;
+    $this->repository->save($this);
 
     return $this;
   }
@@ -29,7 +30,10 @@ class Cart {
    * Responsável por remover um usuário do carrinho
    */
   public function removeCustomer(): self {
+    if(!$this->customer) return $this;
+
     $this->customer = null;
+    $this->repository->save($this);
 
     return $this;
   }
@@ -51,6 +55,7 @@ class Cart {
     foreach($this->products as $key => $product) {
       if($product->getId() === $id) {
         unset($this->products[$key]);
+        $this->repository->save($this);
         break;
       }
     }
@@ -85,6 +90,12 @@ class Cart {
    * Responsável por retornar o checkout
    */
   public function checkout(): float {
+    if(empty($this->products)) throw new Exception('O carrinho não pode estar vazio!');
+
+    if(!$this->customer) throw new Exception('O carrinho deve conter um cliente!');
+
+    $this->repository->save($this);
+
     return $this->getSubtotalCart();
   }
 
