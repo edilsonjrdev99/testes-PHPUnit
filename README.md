@@ -78,7 +78,7 @@ tearDownAfterClass()
 
 O PHPUnit oferece mais de uma forma de documentar e reportar os testes executados:
 
-- **`phpunit.xml`** — arquivo de configuração principal do PHPUnit. Define suítes de testes, cobertura de código, filtros e outras opções. É o método mais comum.
+- **`phpunit.xml`** — arquivo de configuração principal do PHPUnit. Define suítes de testes, cobertura de código, filtros e outras opções. É o método mais comum. **Como separar tipos de teste**: podemos definir o path para cada tipo de teste, por exemplo `tests/unit` para unitários. O recomendado é usar apenas uma palavra no `name` do `testsuite`, porque ela será usada no parâmetro `php vendor/bin/phpunit --testsuite="unit"`
 
 ```xml
 <phpunit bootstrap="vendor/autoload.php" colors="true">
@@ -246,3 +246,19 @@ $cartMock->expects($this->once())->method('addProduct')->with($product);
 4. **Spy** — como Stub, mas grava o que aconteceu para verificar depois.
 
 5. **Fake** — implementação real simplificada (ex: banco de dados em memória em vez de PostgreSQL).
+
+## testes de integração
+
+Testes de integração são testes responsáveis por verificar o fluxo do código com um fator externo, seja o banco, uma API, ele testa a integração do nosso código com um recurso externo I/O. **exemplo**: Precisamos testar se ocorre a persistência de um determinado dado no banco
+
+1. Em caso de testar banco de dados, é importante atentarmos ao fato de não usar o banco de produção, o ideal seria criar um novo banco para testes, mas se em algum caso for necessário testar o banco de dados de produção, podemos usar a transação (inicia uma transação após a conexão do banco e após o teste damos o rollback).
+
+2. SQLite é uma opção conveniente para testes por ser leve e não precisar de instalação, mas tem um problema: ele se comporta diferente do MySQL e do PostgreSQL (tipos de dados, constraints, sintaxe). Testes que passam no SQLite podem falhar em produção. Para testes de integração mais confiáveis, o ideal é usar o mesmo banco da produção (não a mesma conexão, um banco com a mesma estrutura), mas em uma instância isolada — o Docker é bastante usado para isso.
+
+3. **verificação de estado após operação**: Após persistir um dado, o teste faz um SELECT para confirmar que ele realmente foi salvo. Isso é o padrão recomendado em testes de integração é o "Assert" do ciclo Arrange-Act-Assert. Sem essa verificação, o teste não garante que a persistência realmente aconteceu. O que pode ser polêmico é fazer isso em *testes unitários* (acessar banco real em vez de usar mock), mas em testes de integração essa verificação é esperada e necessária.
+
+4. **teste intermediário**: É uma extensão do padrão AAA onde adicionamos assertions no meio do fluxo, não só no final. Por exemplo: após criar um usuário, verificamos se ele existe antes de continuar o teste; depois testamos o que realmente queríamos. Aumenta a confiabilidade porque, se algo falhar no meio, sabemos exatamente onde parou, mas também aumenta a complexidade do teste.
+
+5. Os testes de integração não são exclusivamente para banco de dados, podemos por exemplo testar APIs, até mesmo as nossas. **Postman**: O Postman possui uma sessão específica para testar endpoints e já possui alguns sneepts para auxiliar os testes
+
+![Exemplo de script de teste automatizado do Postman](https://learning.postman.com/docs/tests-and-scripts/write-scripts/test-examples/?utm_source=chatgpt.com)
