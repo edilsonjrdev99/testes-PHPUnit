@@ -91,16 +91,27 @@ class Cart {
   /**
    * Responsável por retornar o checkout
    */
-  public function checkout(): float {
+  public function checkout(): array {
+    $notified = false;
+
     if(empty($this->products)) throw new Exception('O carrinho não pode estar vazio!');
 
     if(!$this->customer) throw new Exception('O carrinho deve conter um cliente!');
 
     $this->repository->save($this);
-
-    $this->notifier->send($this->customer->getEmail(), '', '');
-
-    return $this->getSubtotalCart();
+    
+    try {
+      $this->notifier->send($this->customer->getEmail(), '', '');
+      $notified = true;
+    } catch (Exception $e) {
+      // Adiciona um log
+    }
+        
+    return [
+      'persisted' => true,
+      'notified'  => $notified,
+      'subtotal'  => $this->getSubtotalCart()
+    ];
   }
 
   /**
@@ -115,5 +126,9 @@ class Cart {
    */
   public function getCartId(): string {
     return $this->id;
+  }
+
+  public function getCustomer(): ?Customer {
+    return $this->customer;
   }
 }

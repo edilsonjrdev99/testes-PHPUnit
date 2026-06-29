@@ -174,7 +174,7 @@ class CartTest extends TestCase {
       ->willReturn(150.0);
 
     $result = $cartMock->checkout();
-    $this->assertEquals(150.0, $result);
+    $this->assertEquals(150.0, $result['subtotal']);
   }
 
   /**
@@ -366,5 +366,27 @@ class CartTest extends TestCase {
 
     $cart = new Cart('cart-notification', $repository, $notifier, [$product], $customer);
     $cart->checkout();
+  }
+
+  /**
+   * O teste deve verificar se o carrinho é persistido se o envio de email falhar
+   */
+  public function test_should_persist_cart_when_sending_email_fail(): void {
+    // Dummy
+    $product    = $this->createStub(Product::class);
+    $customer   = $this->createStub(Customer::class);
+
+    $repository = $this->createMock(RepositoryInterface::class);
+    $notifier   = $this->createMock(NotifierInterface::class);
+    $cart       = new Cart('cart-notifier-1', $repository, $notifier, [$product], $customer);
+
+    $repository->expects($this->once())->method('save');
+    $notifier->expects($this->once())->method('send')->willThrowException(
+      new RuntimeException('Erro ao enviar uma notificação')
+    );
+
+    $result = $cart->checkout();
+
+    $this->assertFalse($result['notified']);
   }
 }
