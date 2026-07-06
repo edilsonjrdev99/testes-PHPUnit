@@ -3,9 +3,11 @@
 use App\Address;
 use App\Cart;
 use App\Customer;
+use App\DTO\CartData;
 use App\Interface\NotifierInterface;
 use App\Interface\RepositoryInterface;
 use App\Product;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class CartRepositoryFakeSpy implements RepositoryInterface {
@@ -25,7 +27,7 @@ class CartRepositoryFakeSpy implements RepositoryInterface {
     return [];
   }
 
-  public function detail(string $cartId): ?Cart {
+  public function detail(string $cartId): ?CartData {
     return null;
   }
 
@@ -45,10 +47,13 @@ class CartRepositoryFake implements RepositoryInterface {
     return $this->carts;
   }
 
-  public function detail(string $cartId): ?Cart {
-    $carts = $this->carts;
+  public function detail(string $cartId): ?CartData {
+    $carts    = $this->carts;
+    $cartById = $carts[$cartId] ?? null;
 
-    return $carts[$cartId] ?? null;
+    return $cartById
+      ? new CartData($cartById->getCartId(), null, null, null)
+      : null;
   }
 
   public function save(Cart $cart): void {
@@ -86,15 +91,38 @@ class CartTest extends TestCase {
   /**
    * O teste deve somar os produtos corretamente
    */
-  public function test_should_sum_products_correctly(): void {
+  #[DataProvider('products')]
+  public function test_should_sum_products_correctly(array $products, float $value): void {
     $cart = $this->cart;
 
-    $cart->addProduct(new Product(1, 'Teclado', 100));
-    $cart->addProduct(new Product(2, 'fone', 50));
-    $cart->addProduct(new Product(3, 'ssd', 150));
-    $cart->removeProduct(3);
+    foreach($products as $product) {
+      $cart->addProduct($product);
+    }
 
-    $this->assertEquals(150, $cart->getSubtotalCart());
+    $this->assertEquals($value, $cart->getSubtotalCart());
+  }
+
+  /**
+   * Data provider de produto
+   */
+  public static function products(): array {
+    return [
+      'three_products' => [
+        [
+          new Product(1, 'Teclado', 100),
+          new Product(2, 'fone', 50),
+          new Product(3, 'ssd', 150)
+        ],
+        300
+      ],
+      'one_product' => [
+        [
+          new Product(4, 'mesa', 150),
+        ],
+        150
+      ],
+      'empty' => [[], 0]
+    ];
   }
 
   /**
@@ -245,7 +273,11 @@ class CartTest extends TestCase {
     $cart1->addProduct($productDumy);
     $cart2->addProduct($productDumy);
 
-    $this->assertEquals($cart1, $repositoryFake->detail('cart-1'));
+    $cartData = new CartData($cart1->getCartId(), null, null, null);
+    $result   = $repositoryFake->detail('cart-1');
+
+    $this->assertInstanceOf(CartData::class, $result);
+    $this->assertEquals($cartData, $result);
   }
 
   /**

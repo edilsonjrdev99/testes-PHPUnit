@@ -5,3 +5,5 @@ vendor/
 .vscode/
 logs/*
 claude/
+/database/
+memory

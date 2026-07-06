@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Cart;
+use App\DTO\CartData;
 use App\Interface\RepositoryInterface;
 use Override;
 
@@ -19,7 +20,7 @@ class CartRepository implements RepositoryInterface {
     return [];
   }
 
-  public function detail(string $cartId): ?Cart {
+  public function detail(string $cartId): ?CartData {
     return null;
   }
 }

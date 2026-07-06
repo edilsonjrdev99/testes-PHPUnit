@@ -24,6 +24,14 @@ class Customer {
     return $this;
   }
 
+  public function getName(): string {
+    return $this->name;
+  }
+
+  public function getAge(): int {
+    return $this->age;
+  }
+
   public function getEmail(): string {
     return $this->email;
   }

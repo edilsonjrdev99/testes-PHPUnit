@@ -3,6 +3,7 @@
 namespace App\Interface;
 
 use App\Cart;
+use App\DTO\CartData;
 
 interface RepositoryInterface {
   /**
@@ -12,5 +13,5 @@ interface RepositoryInterface {
 
   public function list(): array;
 
-  public function detail(string $cartId): ?Cart;
+  public function detail(string $cartId): ?CartData;
 }
